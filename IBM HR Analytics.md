@@ -7,17 +7,17 @@ IBM HR Analytics
 
 Contents:
 -----------------------------------
-[Abstract](abstract)
+[Abstract](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/IBM%20HR%20Analytics.md#abstract)
 
-[Part One Explotary Data Analysis](part-one-explotary-data-analysis)
+[Part One Explotary Data Analysis](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/IBM%20HR%20Analytics.md#part-one-explotary-data-analysis)
 
-[Part Two Unsupervised Learning](part-two-unsupervised-learning)
+[Part Two Unsupervised Learning](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/IBM%20HR%20Analytics.md#part-two-unsupervised-learning)
 
-[Part Three Modeling](part-three-modeling)
+[Part Three Modeling](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/IBM%20HR%20Analytics.md#part-three-modeling)
 
-[Part Four Evaluation](part-four-evaluation)
+[Part Four Evaluation](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/IBM%20HR%20Analytics.md#part-four-evaluation)
 
-[Part Five Deployment](part-five-deloyment)
+[Part Five Deployment](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/IBM%20HR%20Analytics.md#part-five-deployment)
 
 ------------------------------------------------------------------------
 
