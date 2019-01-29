@@ -227,14 +227,243 @@ Part Three Modeling
 ## Logistic Regression 
 For logstic regression we initially inducted the model using all 30 variables. We next reduced the model by running backwards stepwise selection and then inducting a second model that only included the statistically significant variables from the backwards stepwise selection. In interpretation of our results we must be aware that we are looking at the conditional probability of an employee leaving given all other variables. The regression also produces the coefficients in log odds due to the structure of logistic regression modeling. The advantage to using the logistic model is in obtaining the weghted combination of our attributes and thus allowing us to determine the relative importnace of the different variables on the probability of retention.
 
+```r
+#Splitting data into Test and Train datasets suing sample function
+data(EmployeeAtt)
+
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(EmployeeAtt))
+
+## set the seed to make your partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(EmployeeAtt)), size = smp_size)
+
+train <- EmployeeAtt[train_ind, ]
+test <- EmployeeAtt[-train_ind, ]
+train
+#Model Selection
+#FullModel, including every variables
+fullmod = glm(Attrition ~. ,data=train,family=binomial)
+summary(fullmod)
+summary(fullmod)$coefficients[,4][summary(fullmod)$coefficients[,4]< 0.01] #p-values of this model
+
+#NothingModel includes no variables, like random guessing
+nothing <- glm(Attrition ~ 1,data=train,family=binomial)
+summary(nothing)
+
+
+#Backward Stepwise selection for Model fullmod
+backwards = step(fullmod)
+summary(backwards)
+
+#Model Back2, all variables are significant, best model to predict from Train dataset
+back2 = glm(Attrition ~ BusinessTravel + DistanceFromHome +  EnvironmentSatisfaction + Gender+ JobInvolvement + JobRole + JobSatisfaction+MaritalStatus+NumCompaniesWorked+OverTime +RelationshipSatisfaction+TotalWorkingYears+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=train,family=binomial)
+summary(back2)
+
+back2 = glm(Attrition ~ BusinessTravel + DistanceFromHome +  EnvironmentSatisfaction + Gender+ JobInvolvement + JobRole + JobSatisfaction+MaritalStatus+NumCompaniesWorked+OverTime +RelationshipSatisfaction+TotalWorkingYears+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=test,family=binomial)
+summary(back2)
+### Logistic Regression
+threshold <- .6
+TP <- sum((back2$fitted >= threshold)*back2$y)
+FP <- sum((back2$fitted >= threshold)*(!back2$y))
+FN <- sum((back2$fitted <  threshold)*back2$y)
+TN <- sum((back2$fitted <  threshold)*(!back2$y))
+TP
+FP
+FN
+TN
+(TP+TN)/(TP+FP+FN+TN)
+LR.FPR <- FP / (FP + TN)
+LR.TPR <- TP / (TP + FN)
+points( c( LR.FPR ), c(LR.TPR))
+text( c( LR.FPR ), c(LR.TPR+.05), labels=c("LR with .3"))
+
+#finding the perfect threshold 
+x <- c(0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1)
+count <- 1
+TPList <- list()
+FPList <- list()
+FNList <- list()
+TNList <- list()
+
+for (threshold in x) {
+  a <- sum((back2$fitted >= threshold)*back2$y)
+  TPList <- append(TPList, a)
+  
+  b <- sum((back2$fitted >= threshold)*(!back2$y))
+  FPList <- append(FPList, b)
+  c <- sum((back2$fitted <  threshold)*back2$y)
+  FNList <- append(FNList, c)
+  d <- sum((back2$fitted <  threshold)*(!back2$y))
+  TNList <- append(TNList, d)
+  
+  LR.FPR <- FP / (FP + TN)
+  LR.TPR <- TP / (TP + FN)
+  points( c( LR.FPR ), c(LR.TPR))  
+  count = count+1
+}
+print(count)
+TPList
+FPList
+FNList
+TNList
+
+accuracyLi<- list()
+
+for (i in 1:20) {
+  Liu= (as.numeric(TPList[i])+as.numeric(TNList[i])) / (as.numeric(TPList[i]) +as.numeric(FPList[i]) +as.numeric(FNList[i]) +as.numeric(TNList[i]))
+  accuracyLi <- append(accuracyLi, Liu)
+}
+
+accuracyLi
+plot(x,accuracyLi,main = "Accuracry cutoffs for different Threshold",xlab = "Thresholds")
+
+#K-Fold Cross Validation for LR
+library(caret)
+ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
+
+mod_fit <- train(Attrition ~ BusinessTravel + DistanceFromHome +  EnvironmentSatisfaction + Gender+ JobInvolvement + JobRole + JobSatisfaction+MaritalStatus+NumCompaniesWorked+OverTime +RelationshipSatisfaction+TotalWorkingYears+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager
+                 ,data=train, method="glm", family="binomial",
+                 trControl = ctrl, tuneLength = 5)
+
+pred = predict(mod_fit, newdata=test)
+confusionMatrix(data=pred, test$Attrition)
+
+
+```
 ## Support Vector Machine
 For our initial model we induced a support vector machine with all 30 variables. We then induced a model on a reduced subset of the most significnat variables from our reduced logistic regression model. The reason we choose to use a SVM is the way in which the model allows a tolerance for mis-classification by finding the optimal balance between the margin separating the data and the hinge loss.
+
+```r
+#SVM model
+library(e1071)
+library(MASS)
+fullSvm <-svm(Attrition ~., data=train,type="C-classification", kernel="linear")
+summary(fullSvm)
+svm_result <-svm(Attrition ~ BusinessTravel + DistanceFromHome +  EnvironmentSatisfaction + Gender+ JobInvolvement + JobRole + JobSatisfaction+MaritalStatus+NumCompaniesWorked+OverTime +RelationshipSatisfaction+TotalWorkingYears+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager, data=train,type="C-classification", kernel="linear")
+summary(svm_result)
+
+svm_result$rho
+head(test)
+TP <- sum((predict(svm_result,test) == "Yes" )*(test$Attrition=="Yes"))
+FP <- sum((predict(svm_result,test) == "Yes" )*(test$Attrition=="No"))
+FN <- sum((predict(svm_result,test) == "No" )*(test$Attrition=="Yes"))
+TN <- sum((predict(svm_result,test) == "No" )*(test$Attrition=="No"))
+TP
+FP
+FN
+TN
+accuraySvm=(TP+TN) / (TP+FP+FN+TN)
+accuraySvm
+SVM.FPR <- FP / (FP + TN)
+SVM.TPR <- TP / (TP + FN)
+
+plot( c( 0, 1 ), c(0, 1), type="n", xlim=c(0,1), ylim=c(0,1), bty="n", xlab = "False positive rate", ylab="True positive rate")
+lines(c(0,1),c(0,1), lty=2)
+points( c( LR.FPR,Tr.FPR,SVM.FPR ), c(LR.TPR,Tr.TPR,SVM.TPR))
+text( c( LR.FPR+0.04,Tr.FPR,SVM.FPR ), c(LR.TPR-.01,Tr.TPR-.05,SVM.TPR+.05), labels=c("LR","Tree","SVM"))
+
+```
 
 ## Classification Tree
 Our next supervised model was a classification tree. We retained the same variables as the reduced logistic model. The classification tree allows us to see the results generated from a relatively straightforward piecewise classification. The advantage from using this model in combination with a linear classifier model such as logistic regression or SVM is that we are unaware of the "shape" of our data and annot be certain if segmenting the data recursively with a tree is more accurate than creating a single decision surface through our entire data space. A tree is also much easier to visualize and explain to a non technical audience.
 
+```r
+#ClassificationTree
+installpkg("tree")
+library(tree)
+installpkg("partykit")
+library(partykit)
+
+AttritionTree <- tree(Attrition ~ BusinessTravel + DistanceFromHome +  EnvironmentSatisfaction + Gender+ JobInvolvement + JobRole + JobSatisfaction+MaritalStatus+NumCompaniesWorked+OverTime +RelationshipSatisfaction+TotalWorkingYears+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager, data=train) 
+summary(AttritionTree)
+plot(AttritionTree)
+text(AttritionTree, label="yval")
+plot(AttritionTree)
+text(AttritionTree,label="yprob")
+AttritionTree[[1]]$yprob[,2]
+## Tree
+TP <- sum((predict(AttritionTree,test,type="class") == "Yes" )*(test$Attrition=="Yes"))
+FP <- sum((predict(AttritionTree,test,type="class") == "Yes" )*(test$Attrition=="No"))
+FN <- sum((predict(AttritionTree,test,type="class") == "No" )*(test$Attrition=="Yes"))
+TN <- sum((predict(AttritionTree,test,type="class") == "No" )*(test$Attrition=="No"))
+TP
+FP
+FN
+TN
+accurayTree=(TP+TN) / (TP+FP+FN+TN)
+accurayTree
+Tr.FPR <- FP / (FP + TN)
+Tr.TPR <- TP / (TP + FN)
+```
+
 ## Logistic Regression with Interaction 
 Next we decided to look at a logistic model including interaction variables. We inducted the initial model by including all possible interactions from the variables used in the reduced logistic model and the pruned the results by running a backwards stepwise selection on all of the significant variables. This model allows for the greatest model complexity by intrducing nonlinear features.
 
+```r
+#Interaction
+library(glmnet)
+`%ni%`<-Negate('%in%')
+data(train)
+x<-model.matrix(Attrition~.^2,data=train)
+x=x[,-1]
+x
+typeof(train$Attrition)
+glmnet1<-cv.glmnet(x=x,y=train$Attrition,type.measure='mse',nfolds=5,alpha=.5,family="binomial")
+c<-coef(glmnet1,s='lambda.min',exact=TRUE)
+inds<-which(c!=0)
+variables<-row.names(c)[inds]
+variables<-variables[variables %ni% '(Intercept)']
+variables          
 
+a<-glm(Attrition ~ X...Age*DailyRate + X...Age*JobSatisfaction + X...Age*TrainingTimesLastYear+ BusinessTravel*DistanceFromHome + BusinessTravel*EducationField + BusinessTravel*HourlyRate + BusinessTravel*JobInvolvement+ BusinessTravel*JobRole + BusinessTravel*MaritalStatus +BusinessTravel*OverTime +BusinessTravel*YearsSinceLastPromotion + DailyRate*JobInvolvement + DailyRate*JobRole + DailyRate*RelationshipSatisfaction + DailyRate*TotalWorkingYears+DailyRate*YearsInCurrentRole + DailyRate*YearsWithCurrManager + Department*JobInvolvement + Department*MaritalStatus +Department*MonthlyRate + Department*OverTime + Department*YearsInCurrentRole + DistanceFromHome*EducationField + DistanceFromHome*JobRole+ DistanceFromHome*MaritalStatus+ DistanceFromHome*OverTime +Education*JobSatisfaction + Education*YearsSinceLastPromotion +EducationField*EnvironmentSatisfaction       +EducationField*Gender +EducationField*JobInvolvement + EducationField*JobRole + EducationField*JobSatisfaction + EducationField*MaritalStatus + EducationField*OverTime+ EducationField*PerformanceRating +EnvironmentSatisfaction*JobLevel +EnvironmentSatisfaction*JobSatisfaction +EnvironmentSatisfaction*WorkLifeBalance +JobInvolvement*OverTime + JobInvolvement*TotalWorkingYears+JobLevel*TrainingTimesLastYear +JobRole*MaritalStatus +JobRole*OverTime +YearsAtCompany*YearsSinceLastPromotion + TrainingTimesLastYear*YearsInCurrentRole, data=train,family="binomial")
+summary(a)
+backwards1 = step(a)
+summary(backwards1)
+interactionModel<-glm(Attrition ~BusinessTravel + DistanceFromHome +  EnvironmentSatisfaction + Gender+ JobInvolvement + JobRole + JobSatisfaction+MaritalStatus+NumCompaniesWorked+OverTime +RelationshipSatisfaction+TotalWorkingYears+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager+DailyRate:TotalWorkingYears+DistanceFromHome:JobRole+JobSatisfaction:Education + YearsSinceLastPromotion:Education  +EnvironmentSatisfaction:WorkLifeBalance +JobInvolvement:TotalWorkingYears +JobRole:OverTime+YearsSinceLastPromotion:YearsAtCompany, data=train,family="binomial")
+summary(interactionModel)
+  
+
+
+#For Interac accuracy
+threshold <- .6
+interMod.TP <- sum((interactionModel$fitted >= threshold)*interactionModel$y)
+interMod.FP <- sum((interactionModel$fitted >= threshold)*(!interactionModel$y))
+interMod.FN <- sum((interactionModel$fitted <  threshold)*interactionModel$y)
+interMod.TN <- sum((interactionModel$fitted <  threshold)*(!interactionModel$y))
+
+interMod.FPR <- interMod.FP / (interMod.FP + interMod.TN)
+interMod.TPR <- interMod.TP / (interMod.TP + interMod.FN)
+```
+------------------------------------------------------------------------
+
+Part Four Evaluation
+-----------------------------------
+
+In testing a range of cutoff calues from 0 to 1 in .05 increments using the OOS dataset we found that our logistic regression model achieved the highest accuracy witha cutoff value of .60. Intuitively this cutoff makes sense in a free-market economy where base employeee turnover is expected to be relatively high. Thus considering employees that are definitely more likely to leave than not as the group at risk will aovid wasting resources on higher compensation for retining employees that actually display a mornal (economy-wide) likelihood of leaving. We use the .60 threshold to evaluate ourlogistic regression model with and without interactions.
+
+## Support Vector Machine
+Sensitivity: .3226 Specificity:.9706 Accuracy:.8614
+
+## Classifcation Tree
+Sensitivity:.2419 Specificity:.9542 Accuracy:.8342
+
+## Logistic Regression 
+Sensitivity:.9542 Specificity:.4355 Accuracy:.8688
+
+## Logistic Regression with Interaction
+Sensitivity:.9314 Specificity:.4032 Accuracy:.8424
+
+Therefore we select the Logistic Model without interactions for the purpose of determining attribute importance/relevance.
+
+------------------------------------------------------------------------
+
+Part Five Deployment
+-----------------------------------
+
+The main reason behind attrition is the reward-effort imbalance. From the exploratory analysis, monthly income and work overtime are two important factors that affect the attrition rate. Therefore, it is suggested that the company investigate about if the employees who work overtime or travel get proper compensation.  
+In the predictive model, one possible business implementation is that to make a dashboard, which utilizes the data generated, to update the possibility of attrition on a daily / monthly basis for every employee. As an indicator, the human resources department can make adjustment to improve the status. 
+The dashboard can also be used to find the most useful plan to improve the job satisfaction as the result of each plan is measured quantitatively on a regular time basis.
+Considering the cost and benefit, the company could also only perform the prediction on existing high performance individuals. After evaluating the probability of these employees leaving the company and the cost of retaining theses employees, the company can maximize their profit by targeting the most profitable employees to make them stay at the company.
+But there are also some issues to think about when implementing the plan suggested above. For example, it is difficult to measure the profit of each high performance individual. And the company needs to think about approach to inform employees about the attrition rate analysis it conducted for employees.
 
