@@ -3,6 +3,21 @@ Lea Zhang
 
 IBM HR Analytics
 ======================
+------------------------------------------------------------------------
+
+Contents:
+---------
+[Abstract](abstract)
+
+[Part One Explotary Data Analysis](part-one-explotary-data-analysis)
+
+[Part Two Unsupervised Learning](part-two-unsupervised-learning)
+
+[Part Three Modeling](part-three-modeling)
+
+[Part Four Evaluation](part-four-evaluation)
+
+[Part Five Deployment](part-five-deloyment)
 
 ------------------------------------------------------------------------
 
