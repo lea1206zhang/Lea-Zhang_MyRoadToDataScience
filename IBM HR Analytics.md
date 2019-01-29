@@ -109,7 +109,7 @@ Those who rated their work-life balance relatively low were commuting a bit fart
 
 ------------------------------------------------------------------------
 
-Part two Unsupervised Learning
+Part Two Unsupervised Learning
 -----------------------------------
   
 We ran out k-means clustering on all 23 numeric variables(scaled). The clusters are selected via Information Criterion where 
@@ -120,3 +120,7 @@ The green cluster represents emplyees with a high income and short tenure. Dark 
 
 ![](https://user-images.githubusercontent.com/37298254/51883886-f10d9380-2352-11e9-8707-a6bcfd7f2a53.png)
   
+------------------------------------------------------------------------
+
+Part Three Modeling
+-----------------------------------
