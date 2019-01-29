@@ -80,6 +80,6 @@ ggplot(EmployeeAtt,aes(x=YearsAtCompany,y=YearsSinceLastPromotion,col=OverTime))
   ggtitle('Attrition')+
   theme(plot.title = element_text(hjust = 0.5))
   ```
-  
+  ![](https://user-images.githubusercontent.com/37298254/51881874-d9321180-234a-11e9-8793-5e4e81c630c0.png)
   
   
