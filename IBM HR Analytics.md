@@ -128,4 +128,14 @@ Part Three Modeling
 ## Logistic Regression 
 For logstic regression we initially inducted the model using all 30 variables. We next reduced the model by running backwards stepwise selection and then inducting a second model that only included the statistically significant variables from the backwards stepwise selection. In interpretation of our results we must be aware that we are looking at the conditional probability of an employee leaving given all other variables. The regression also produces the coefficients in log odds due to the structure of logistic regression modeling. The advantage to using the logistic model is in obtaining the weghted combination of our attributes and thus allowing us to determine the relative importnace of the different variables on the probability of retention.
 
-##
+## Support Vector Machine
+For our initial model we induced a support vector machine with all 30 variables. We then induced a model on a reduced subset of the most significnat variables from our reduced logistic regression model. The reason we choose to use a SVM is the way in which the model allows a tolerance for mis-classification by finding the optimal balance between the margin separating the data and the hinge loss.
+
+## Classification Tree
+Our next supervised model was a classification tree. We retained the same variables as the reduced logistic model. The classification tree allows us to see the results generated from a relatively straightforward piecewise classification. The advantage from using this model in combination with a linear classifier model such as logistic regression or SVM is that we are unaware of the "shape" of our data and annot be certain if segmenting the data recursively with a tree is more accurate than creating a single decision surface through our entire data space. A tree is also much easier to visualize and explain to a non technical audience.
+
+## Logistic Regression with Interaction 
+Next we decided to look at a logistic model including interaction variables. We inducted the initial model by including all possible interactions from the variables used in the reduced logistic model and the pruned the results by running a backwards stepwise selection on all of the significant variables. This model allows for the greatest model complexity by intrducing nonlinear features.
+
+
+
