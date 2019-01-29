@@ -5,6 +5,6 @@
 - [Lea Zhang - My Road To Data Science](#lea-zhang---my-road-to-data-science)
 - [About](#about)
 - [Projects](#projects)
-  - [IBM HR Analytics](#ibm-hr-analytics) 
+  - [IBM HR Analytics](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/IBM%20HR%20Analytics.md) 
 
 
