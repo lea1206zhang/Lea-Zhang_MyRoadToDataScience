@@ -124,3 +124,8 @@ The green cluster represents emplyees with a high income and short tenure. Dark 
 
 Part Three Modeling
 -----------------------------------
+
+## Logistic Regression 
+For logstic regression we initially inducted the model using all 30 variables. We next reduced the model by running backwards stepwise selection and then inducting a second model that only included the statistically significant variables from the backwards stepwise selection. In interpretation of our results we must be aware that we are looking at the conditional probability of an employee leaving given all other variables. The regression also produces the coefficients in log odds due to the structure of logistic regression modeling. The advantage to using the logistic model is in obtaining the weghted combination of our attributes and thus allowing us to determine the relative importnace of the different variables on the probability of retention.
+
+##
