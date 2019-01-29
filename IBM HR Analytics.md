@@ -68,7 +68,12 @@ g3 <- ggplot(data = EmployeeAtt,aes(x=DailyRate,fill=Attrition))+
 g4 <- ggplot(data = EmployeeAtt,aes(x=HourlyRate,fill=Attrition))+
   geom_density(alpha=0.6)
 grid.arrange(g1, g2, g3, g4, ncol = 2, nrow = 2)
-### attrition increases as monthly income decreases
+```
+![](https://user-images.githubusercontent.com/37298254/51882358-a2f59180-234c-11e9-9490-493267b7c1c4.jpeg)
+![](https://user-images.githubusercontent.com/37298254/51882362-a426be80-234c-11e9-99f3-ec7f52060962.jpeg)
+![](https://user-images.githubusercontent.com/37298254/51882367-a5f08200-234c-11e9-8e6b-ee5dd8354ab1.jpeg)
+Attrition increases as monthly income decreases.
+```r
 ggplot(EmployeeAtt,aes(x=Attrition,fill=OverTime))+
   geom_bar()
 ggplot(EmployeeAtt,aes(x=Attrition,fill=as.factor(WorkLifeBalance)))+
@@ -80,6 +85,11 @@ ggplot(EmployeeAtt,aes(x=YearsAtCompany,y=YearsSinceLastPromotion,col=OverTime))
   ggtitle('Attrition')+
   theme(plot.title = element_text(hjust = 0.5))
   ```
-  ![](https://user-images.githubusercontent.com/37298254/51881874-d9321180-234a-11e9-8793-5e4e81c630c0.png)
+
+People are not growing healthily in the organization. Those who have attrition and work overtime seem to be less likely to be promoted. Work overtime is an important factor leading to attrition. 
+
+  
+  
+  
   
   
