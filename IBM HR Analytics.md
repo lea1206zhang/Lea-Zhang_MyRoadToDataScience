@@ -6,7 +6,7 @@ IBM HR Analytics
 ------------------------------------------------------------------------
 
 Contents:
----------
+-----------------------------------
 [Abstract](abstract)
 
 [Part One Explotary Data Analysis](part-one-explotary-data-analysis)
