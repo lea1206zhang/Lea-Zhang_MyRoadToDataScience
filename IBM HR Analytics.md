@@ -461,9 +461,12 @@ Therefore we select the Logistic Model without interactions for the purpose of d
 Part Five Deployment
 -----------------------------------
 
-The main reason behind attrition is the reward-effort imbalance. From the exploratory analysis, monthly income and work overtime are two important factors that affect the attrition rate. Therefore, it is suggested that the company investigate about if the employees who work overtime or travel get proper compensation.  
-In the predictive model, one possible business implementation is that to make a dashboard, which utilizes the data generated, to update the possibility of attrition on a daily / monthly basis for every employee. As an indicator, the human resources department can make adjustment to improve the status. 
+* The main reason behind attrition is the reward-effort imbalance. From the exploratory analysis, monthly income and work overtime are two important factors that affect the attrition rate. Therefore, it is suggested that the company investigate about if the employees who work overtime or travel get proper compensation.  
+
+* In the predictive model, one possible business implementation is that to make a dashboard, which utilizes the data generated, to update the possibility of attrition on a daily / monthly basis for every employee. As an indicator, the human resources department can make adjustment to improve the status. 
 The dashboard can also be used to find the most useful plan to improve the job satisfaction as the result of each plan is measured quantitatively on a regular time basis.
-Considering the cost and benefit, the company could also only perform the prediction on existing high performance individuals. After evaluating the probability of these employees leaving the company and the cost of retaining theses employees, the company can maximize their profit by targeting the most profitable employees to make them stay at the company.
-But there are also some issues to think about when implementing the plan suggested above. For example, it is difficult to measure the profit of each high performance individual. And the company needs to think about approach to inform employees about the attrition rate analysis it conducted for employees.
+
+* Considering the cost and benefit, the company could also only perform the prediction on existing high performance individuals. After evaluating the probability of these employees leaving the company and the cost of retaining theses employees, the company can maximize their profit by targeting the most profitable employees to make them stay at the company.
+
+* But there are also some issues to think about when implementing the plan suggested above. For example, it is difficult to measure the profit of each high performance individual. And the company needs to think about approach to inform employees about the attrition rate analysis it conducted for employees.
 
