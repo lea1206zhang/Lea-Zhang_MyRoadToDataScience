@@ -118,7 +118,7 @@ BIC selected 22 clusters and AIC selected 48. As both BIC and AIC selected a lar
 The below plots show four clusters: the red cluster contains employees with a low income and a short tenure at the company. 
 The green cluster represents emplyees with a high income and short tenure. Dark blue are employees with a low income and a long tenure. Finally, light blue indicates employees with a high income and a long tenure. The size of the circle indicates the attrition rate. As intuition would tell us, employees with a lower income are more likely to leave the company.
 
-'''r
+```r
 #--------------------------------- Unsupervised Learning - Clustering 
 source("DataAnalyticsFunctions.R")
 x <- EmployeeAtt
@@ -215,7 +215,7 @@ yyac_kmeans$size
 tapply(EmployeeAtt[,32],yyac_kmeans$cluster,mean)
 #attach(EmployeeAtt)
 #identify(YearsAtCompany, MonthlyIncome, JobInvolvement)
-'''
+```
 
 ![](https://user-images.githubusercontent.com/37298254/51883886-f10d9380-2352-11e9-8707-a6bcfd7f2a53.png)
   
