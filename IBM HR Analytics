@@ -21,7 +21,7 @@ Contents:
 
 ------------------------------------------------------------------------
 
-Abstract:
+# Abstract:
 ---------
 Through the use of data science analysis techniques we where able to form a picture of 
 what factors are important in determining employee attrition. Using these results IBM HR will
@@ -32,7 +32,7 @@ a higher risk of leaving.
 
 ------------------------------------------------------------------------
 
-Part One Explotary Data Analysis
+# Part One Explotary Data Analysis
 ------------------------------------------------------
 
 ### Data Acquisition
@@ -236,7 +236,7 @@ tapply(EmployeeAtt[,32],yyac_kmeans$cluster,mean)
   
 ------------------------------------------------------------------------
 
-Part Three Modeling
+# Part Three Modeling
 -----------------------------------
 
 ## Logistic Regression 
@@ -452,7 +452,7 @@ interMod.TPR <- interMod.TP / (interMod.TP + interMod.FN)
 ```
 ------------------------------------------------------------------------
 
-Part Four Evaluation
+# Part Four Evaluation
 -----------------------------------
 
 In testing a range of cutoff calues from 0 to 1 in .05 increments using the OOS dataset we found that our logistic regression model achieved the highest accuracy witha cutoff value of .60. Intuitively this cutoff makes sense in a free-market economy where base employeee turnover is expected to be relatively high. Thus considering employees that are definitely more likely to leave than not as the group at risk will aovid wasting resources on higher compensation for retining employees that actually display a mornal (economy-wide) likelihood of leaving. We use the .60 threshold to evaluate ourlogistic regression model with and without interactions.
@@ -473,7 +473,7 @@ Therefore we select the Logistic Model without interactions for the purpose of d
 
 ------------------------------------------------------------------------
 
-Part Five Deployment
+# Part Five Deployment
 -----------------------------------
 
 * The main reason behind attrition is the reward-effort imbalance. From the exploratory analysis, monthly income and work overtime are two important factors that affect the attrition rate. Therefore, it is suggested that the company investigate about if the employees who work overtime or travel get proper compensation.  
