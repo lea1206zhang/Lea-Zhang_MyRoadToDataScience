@@ -118,6 +118,105 @@ BIC selected 22 clusters and AIC selected 48. As both BIC and AIC selected a lar
 The below plots show four clusters: the red cluster contains employees with a low income and a short tenure at the company. 
 The green cluster represents emplyees with a high income and short tenure. Dark blue are employees with a low income and a long tenure. Finally, light blue indicates employees with a high income and a long tenure. The size of the circle indicates the attrition rate. As intuition would tell us, employees with a lower income are more likely to leave the company.
 
+'''r
+#--------------------------------- Unsupervised Learning - Clustering 
+source("DataAnalyticsFunctions.R")
+x <- EmployeeAtt
+library("dplyr")
+x_num <- select_if(x, is.numeric)
+names(x_num)
+summary(x_num)
+x.scaled <- scale(x_num)
+
+#choose number of clusters based on the fit above
+kfit <- lapply(1:50, function(k) kmeans(x.scaled,k))
+#Then "A" for AICc (default) or "B" for BIC or 'C' for HDIC
+kaicc <- sapply(kfit,kIC)
+kbic  <- sapply(kfit,kIC,"B")
+##Now we plot them, first we plot AIC
+par(mar=c(1,1,1,1))
+par(mai=c(1,1,1,1))
+plot(kaicc, xlab="K", ylab="IC", 
+     ylim=range(c(kaicc,kbic)), # get them on same page
+     type="l", lwd=2)
+#Vertical line where AIC is minimized
+abline(v=which.min(kaicc))
+#Next we plot BIC
+lines(kbic, col=4, lwd=2)
+#Vertical line where BIC is minimized
+abline(v=which.min(kbic),col=4)
+#Insert labels
+text(c(50,20),c(22000,26000),c("AIC","BIC"))
+#both AIC and BIC choose very complicated models: AIC chooses 50 clusters, BIC chooses 19 clusters
+#we use BIC
+nineteen.clusters <- kmeans(x.scaled, 19, nstart = 10)
+nineteen.clusters$centers
+nineteen.clusters$size
+#We can get the attrition rate for each cluster 
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+plot(tapply(as.numeric(EmployeeAtt$Attrition), nineteen.clusters$cluster, mean),ylab=NA, col='red')
+mtext(side = 2, line = 3,'Attrition')
+par(new=TRUE)
+plot(tapply(EmployeeAtt$JobInvolvement, nineteen.clusters$cluster,mean),axes=F,xlab=NA,ylab=NA, col='green')
+axis(side = 4)
+mtext(side = 4, line = 3,'JobInvolvement')
+#legend("topright",inset=c(0.5,0.5),legend=c("Attrition", 'JobInvolvement'), pch=c(1,1),col=c("red", "green"))
+#axis(1,1:20)
+#Summarize some variables on the clusters
+lines(tapply(EmployeeAtt$JobInvolvement, nineteen.clusters$cluster,mean))
+#find that people with lower involvment generally fall in cluster with higher attrition 
+#########################have too many clusters and the size are relatively small, explore less variables
+#create one column with 1 & 0 for attrition
+EmployeeAtt$att <- ifelse(EmployeeAtt$Attrition == 'Yes', 1, 0)
+sum(EmployeeAtt$att)/(nrow(EmployeeAtt)-sum(EmployeeAtt$att))
+#####yes/no = 0.19 or 1:5
+#Relationship satisfaction and monthly incom
+relation <- EmployeeAtt[ ,c(23,17)]
+rrelation <- scale(EmployeeAtt[ ,c(23,28)])
+plot(relation, col = 4, xlab="Relationship Satisfaction Level", ylab="Monthly income")
+plot(relation, col = 3-EmployeeAtt$att, xlab="Relationship Satisfaction Level", ylab="Monthly income")
+##montly income seems more correlated with attrition 
+#work life balance and monthly income
+relation <- EmployeeAtt[ ,c(27,17)]
+rrelation <- scale(EmployeeAtt[ ,c(23,28)])
+plot(relation, col = 4, xlab="Work Life Balance", ylab="Monthly income")
+plot(relation, col = 3-EmployeeAtt$att, xlab="Work Life Balance", ylab="Monthly income")
+#attach(EmployeeAtt)
+#identify(WorkLifeBalance,MonthlyIncome,JobInvolvement)
+####interesting finding with relatively good work life balance(3) and high salary, 
+###still a portion of people want to leave
+###years at company
+yac <- EmployeeAtt[ ,c(28, 17)]
+#######
+points(Ssimple_kmeans$centers, col = 1, pch = 24, cex = 1.5, lwd=1, bg = 2:5)
+plot(yac, col = 4, xlab="Years at company", ylab="Monthly income")
+plot(yac, col = 3-EmployeeAtt$att, xlab="Years at company", ylab="Monthly income")
+#######
+yyac <- scale(EmployeeAtt[ ,c(28, 17)])
+yyac_kmeans <- kmeans(yyac,4,nstart=10)
+colorcluster <- 1+yyac_kmeans$cluster
+plot(yyac, col = 1, xlab="years at company", ylab="monthly income")
+plot(yyac, col = colorcluster, xlab="years at company", ylab="monthly income")
+points(yyac_kmeans$centers, col = 1, pch = 24, cex = 1.5, lwd=1, bg = 2:5)
+####Cluster in the original units
+colorcluster <- 1+yyac_kmeans$cluster
+plot(yac, xlim=c(0,80), xlab="years at company", ylab="monthly income", col = colorcluster)
+###This plotted in the original space
+plot(yac, xlim=c(0,80), xlab="years at company", ylab="monthly income", col = colorcluster, main="Circles indicates installment rate (%)")
+radius <- 2*sqrt(EmployeeAtt[,32]) ## installment rate in %
+symbols(yac, circles=radius ,  xlim=c(0,80), xlab="years at company", ylab="monthly income", inches = FALSE, bg = colorcluster)
+
+###The command
+yyac_kmeans$centers
+##displays the k centers (good to interpret)
+yyac_kmeans$size
+##displays the size of each cluster
+###Summarize a variable on each cluster
+tapply(EmployeeAtt[,32],yyac_kmeans$cluster,mean)
+#attach(EmployeeAtt)
+#identify(YearsAtCompany, MonthlyIncome, JobInvolvement)
+'''
+
 ![](https://user-images.githubusercontent.com/37298254/51883886-f10d9380-2352-11e9-8707-a6bcfd7f2a53.png)
   
 ------------------------------------------------------------------------
