@@ -9,5 +9,5 @@
     - [IBM HR Analytics](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/IBM%20HR%20Analytics.md) 
   - [Tableau](https://public.tableau.com/profile/lea.zhang#!/)
   - SQL Practice
-    - [LeetCode]
+    - [LeetCode](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/tree/master/LeetCode/Solutions)
 
