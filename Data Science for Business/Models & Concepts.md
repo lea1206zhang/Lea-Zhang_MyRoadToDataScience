@@ -5,3 +5,4 @@ There are 3 [parameters](https://medium.com/all-things-ai/in-depth-parameter-tun
 - kernel (select the type of hyperplane to separate the data); 
 - c (regularization parameter; penalty parameter of the error term, it controls the trade off between smooth decision boundary and classifying the training points correctly); 
 - gamma (a parameter for non linear hyperplanes; the higher the gamma values it tries to exactly fit the training data set) 
+# Principle Component Analysis
