@@ -2,7 +2,7 @@
 
 - if two factors are independent, then an level of one should have the same probability for each level of the other factor, e.g.
   P(Waiting|No Service) = P(Waiting|Service)
-## Muptiple Testing and Discoveries
+## Mutiple Testing and Discoveries
 ### Examples:
 - Amazon recommendation system
 - Music recommendation system
