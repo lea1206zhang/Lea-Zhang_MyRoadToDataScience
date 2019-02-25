@@ -23,7 +23,7 @@ Contents:
 
 # Abstract:
 ---------
-Through the use of data science analysis techniques we where able to form a picture of 
+Through the use of data science analysis techniques we were able to form a picture of 
 what factors are important in determining employee attrition. Using these results IBM HR will
 better understand what employees find important for job satisfaction. We provide a recommendation 
 on how to implement a targeted plan to retain more employees at risk of leaving. These results 
