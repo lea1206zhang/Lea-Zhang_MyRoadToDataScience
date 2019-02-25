@@ -37,8 +37,6 @@ a higher risk of leaving.
 
 ### Data Acquisition
 
-The data is downloaded from the following link <https://www.kaggle.com/pavansubhasht/ibm-hr-analytics-attrition-dataset>
-
 This dataset contains 1470 observations of 35 variables, as the table shown below. Basically, there are three aspects of data: 
 1) the basic information about the employee, including age, education, number of company worked.
 2) the basic information about the job, including income level, job level.
