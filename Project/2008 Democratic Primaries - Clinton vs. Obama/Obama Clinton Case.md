@@ -21,6 +21,10 @@ As of February 19, 2008, of the 2,868 total counties for which county-level vote
 
 I would use the primaries and caucuses results before February 19, 2008 (1131 rows) to predict the results of the remaining 1131 rows. 
 
+# Data Transformation 
+
+I replaced all the NAs with the mean of non-missing data for numeric columns. I created two new columns: Obama_margin_percent and Obama_wins in the training data set. They shows how much did Obama win compared with Clinton in each county and I used Obama_wins as the target varibale in the following predictions.
+
 # Data Exploration 
 
 ![](https://user-images.githubusercontent.com/37298254/54145295-14246c00-4404-11e9-86fb-f72a02242c7d.png)
