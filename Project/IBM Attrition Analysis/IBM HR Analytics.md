@@ -64,7 +64,7 @@ EmployeeAtt$EmployeeNumber <- NULL
 EmployeeAtt$StandardHours <- NULL
 head(EmployeeAtt)
 ```
-We looked at the independetn relationships betweeen attrition and separate attributes such as YearsAtIBM,
+We looked at the independent relationships between attrition and separate attributes such as YearsAtIBM,
 OverTime and MonthlyIncome.
 ```r
 #----------------------------------------------------------------------------------------- Exploratory Data Analysis
