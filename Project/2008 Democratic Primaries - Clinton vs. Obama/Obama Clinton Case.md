@@ -28,4 +28,4 @@ I replaced all the NAs with the mean of non-missing data for numeric columns. I 
 # Data Exploration 
 
 ![](https://user-images.githubusercontent.com/37298254/54145295-14246c00-4404-11e9-86fb-f72a02242c7d.png)
-
+![](https://user-images.githubusercontent.com/37298254/54145785-0ae7cf00-4405-11e9-8fdc-f2d1323095ea.png)
