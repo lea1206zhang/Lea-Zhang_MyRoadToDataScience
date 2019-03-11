@@ -11,7 +11,12 @@ This created a new culture, and the Obama 2012 campaign also used data analytics
 
 As of February 19, 2008, of the 2,868 total counties for which county-level vote data would eventually become available, there were 1,131 counties left to report. An estimated 2,490 delegates were already committed, and 2,118 were needed to secure the party’s nomination; there were still 1,744 delegates to be awarded in upcoming states’ primaries and caucuses. (See Exhibit 1 for a list of past and upcoming primaries and caucuses.) Later that evening, the results of Hawaii’s caucus and Wisconsin’s primary would be announced. In these two states, and in over 1,000 counties in other states, it remained to be seen who would vote for Clinton and who would vote for Obama. Whoever won the most votes in these remaining primaries was likely to become the next POTUS.
 
+|               | Vote          | Demographic/county data|
+| ------------- | ------------- | ------------- | 
+| Training set  | Available     | Available     |   
+| Testing set   | Not Available | Available     | 
+
 
 - Objective 
 
-I would use the primaries and caucuses results before February 19, 2008 (1131 rows) to predict the results of remaining 1131 rows. 
+I would use the primaries and caucuses results before February 19, 2008 (1131 rows) to predict the results of the remaining 1131 rows. 
