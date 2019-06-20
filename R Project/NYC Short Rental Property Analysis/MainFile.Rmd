@@ -3,9 +3,7 @@ title: "Airbnb & Zillow Data Challenge"
 author: "Lea Zhang"
 date: "4/22/2019"
 output:
-  html_document: 
-    code_folding: hide
-  pdf_document: default
+  rmarkdown::github_document
 ---
 
 ```{r setup, include=FALSE}
