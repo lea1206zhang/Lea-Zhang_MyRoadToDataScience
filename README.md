@@ -15,5 +15,5 @@
   - [Major League Baseball Analytics](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/SQL/Major%20League%20Baseball%20Analytics.ipynb): Query a database containing pitching, hitting, and fielding statistics for Major League Baseball from 1871 to 2016. Used JOIN, common table expressions and window functions to examine the trend of ranking and team dynamics for Atlanta Braves, and compare the performance and status of non-league champion with league champion.
   - [Tweepy Template](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/SQL/Tweepy_Template.ipynb): Use Tweepy to Communicate with Twitter platform and use its API. 
   - [Web Scraping with Beautiful Soup](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/SQL/Web%2BScraping%2Bwith%2BBeautiful%2BSoup.ipynb): Web Scraping with Beautiful Soup.
-  - [Windows Function](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/SQL/Window_Functions.ipynb): Queried airline_ontime dataset to analyze departure delays across the carriers.
+  - [Windows Function](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/blob/master/SQL/Window_Functions.ipynb): Query airline_ontime dataset to analyze departure delays across the carriers.
 
