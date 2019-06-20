@@ -1,0 +1,641 @@
+---
+title: "Airbnb & Zillow Data Challenge"
+author: "Lea Zhang"
+date: "4/22/2019"
+output:
+  html_document: 
+    code_folding: hide
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Executive Summary
+
+Through the use of data analysis techniques, I was able to form a picture of how profitability on short term rentals changes across New York City, in particular for zip codes. Using the result, the clients will be able to better understand the market and assess risks. These results can also be used in making decisions under different scenarios and time lines. An interactive Shiny app has also been provided to give more intuitive insights.
+
+# Key Insights and Conclusions 
+
+-	From ROI, it’s conclude that properties in Staten Island and Queens have higher profitability while those in Manhattan and Brooklyn have annualized ROI (~ 2%) that is less than half of that (>4%) for the former two boroughs. 
+-	For breakeven period, properties in Staten Island and Queens typically will pay back the investment in around 10 years while in Manhattan and Brooklyn the breakeven period ranges from 20 to 40 years. 
+  - The properties in Manhattan that have the longest breakeven periods (such as 10013, 10014) are located in the south part of Manhattan, which also have the highest property price (which can be seen from RShiny App in New York Zillow Map).
+  - The properties in Manhattan that have relatively shorter breakeven periods (such as 10036, 10025) are located northern side, which is away from the coveted prime downtown Manhattan areas.
+- For total number of reviews, both Manhattan and Brooklyn are more popular locations for short term rental. And there are more available listings in these areas, which shows that the short-term rental market is more mature in these areas. It also aligns with the observations from the first two insights that the profit marginal is small in these two areas. 
+
+# Recommendations 
+-	Based on the three individual metrics, I recommend zip code 10036, 10025 and 11231. Although they are not ranked high in terms of ROI and breakeven period, the demand in these areas are high so it’s less risk to invest and they can provide downside protection.
+-	If the client knows about short-term rental industry or is willing to do market research about Staten Island and Queens, zip code 11434 and 10306 are recommended.
+
+# Package Loading
+## Required Packages
+
+- Tidyverse (dplyr, ggplot2..) - Data Read, Manipulation and visualisation
+- Caret - Pre Processing, Feature Selection
+- Plotly - Interactive Visualization
+- ggmap - For geographic visualization 
+- KableExtra - Styling for Kable (Interactive Data Tables within Markdown)
+- Shiny - for building shiny app later 
+```{r include = FALSE}
+# Installing package if it is not present already
+
+package_list <- c('data.table','dplyr','ggplot2',
+                  'knitr','stringr','tidyverse',
+                  'ggmap','kableExtra','caret',
+                  'lattice','bit','gridExtra',
+                  'grid','shiny','scales',
+                  'plotly','R.utils')
+
+for (package in package_list) {
+  if (!require(package, character.only = T, quietly = T)) {
+    install.packages(package, repos = "http://cran.us.r-project.org")
+    library(package, character.only = T)
+  }
+}
+
+```
+
+```{r include = FALSE}
+library(dplyr)
+library(bit64)
+library(lattice)
+library(caret) # remove zero variance columns
+library(kableExtra)
+library(stringr)
+library(data.table)
+library(ggplot2)
+library(ggmap)
+library(gridExtra)
+library(grid)
+library(shiny)
+library(scales)
+library(plotly)
+library(knitr)
+library(bit)
+library(R.utils) # for reading listings in certain windows environment
+register_google(key ='AIzaSyAjY6wXvktwZ5KdkJZ_TTcyb7jUnWMGsK8') # for using ggmap
+```
+
+# Data Loading 
+```{r}
+#setwd("working directory")
+setwd("~/Desktop/apply for job!!!/company/Capital One/airbnb-zillow-data-challenge-master")
+airbnb <- fread('listings.csv',header=T,na.strings=c(""))
+# for windows users, the file you download may be 'listings.csv.gz'
+# airbnb <- fread('listings.csv',header=T,na.strings=c("")) #using package R.utils
+zillow <- fread('Zip_Zhvi_2bedroom.csv',header=T,na.strings=c(""))
+```
+
+# Data Preparation & Data Quality Check
+Cost and Revenue datasets are handled separately in an attempt to enrich the data quality for exploratory data analysis.
+
+* Account for common data quality issues: Missing Values, Duplicated Rows etc and make relevant changes.
+* Filter Zero Variance/imbalanced columns, high missing value columns, columns not associated to the problem statement etc.
+* Analyze any redudant columns and aggregate based on reasoning/assumptions.
+* Produce clean cost and revenue data for joining and further exploration.
+
+# Revenue Data
+Revenue data contains a mix of information including details about the properties like address, zipcode, bedrooms, bathrooms to information about host, daily/weekly and monthly price details for stay.
+
+Dimension of Revenue Data, Summary and Check for NAs and unique values.
+```{r include = FALSE}
+# dimensions of airbnb dataset
+dim(airbnb)
+# There are 40753 rows and 95 columns in Airbnb listing data.
+summary(airbnb)
+str(airbnb)
+# Check for how many NAs and how many unique in each column
+sapply(airbnb,function(x) sum(is.na(x)))
+sapply(airbnb,function(x) length(unique(x)))
+# Check for duplications
+airbnb[which(duplicated(airbnb)==TRUE),]
+# there's no duplications
+```
+
+## Remove Columns 
+* First non-relevant columns are removed
+*	Remove character columns that contain more than 20% of unique observations given considerations of missing values in the character columns. 11 columns are removed.
+*	Remove Columns that have near zero variance. 9 columns are removed.
+Therefore, 33 columns are left in the dataset. 
+
+### Based on Relevance 
+Remove the columns that start with “require” or “host” and columns that end with “url” and “nights” as it’s found that these columns are not relevant with the problem in this case. 28 columns are removed.
+```{r}
+pattern <-
+  c(
+    colnames(
+  airbnb %>% select(
+  starts_with("require"),
+  starts_with("host"),
+  ends_with("url"),
+  ends_with("nights"))
+  ))
+airbnb1 <- airbnb[, (pattern) := NULL]
+pattern
+```
+### Based on Unique Values - Character Columns
+Character columns with near 100% variance (Every Row is different) are removed as they provide no group level information that can be used on a larger population/scale.
+These columns include textual columns describing the home, host, amenties etc. 
+```{r}
+uniquedf <-
+  airbnb1 %>% select_if(is.character) %>% summarise_all(funs(n_distinct(.))) 
+
+uniquedf <-
+  uniquedf %>% gather(key = var_name, value = value, 1:ncol(uniquedf))
+
+uniquedf$percentUnique <- round(uniquedf$value/nrow(airbnb1),2)
+uniqueval <- uniquedf %>% filter(percentUnique > 0.2) %>% pull(var_name)
+airbnb2 <- airbnb1[, (uniqueval) := NULL]
+
+uniqueval
+```
+### Based on Vairance 
+Get the matrics for vairables that have near zero variance using caret package and remove them.
+```{r}
+zvdf <- nearZeroVar(airbnb2, saveMetrics = TRUE)
+ZVnames=rownames(subset(zvdf, nzv== TRUE))
+airbnb3 <- airbnb2[ , (ZVnames) := NULL]
+
+ZVnames
+```
+### Remove 14 Columns Manually
+At last, 14 columns are removed manually by going through the dictionary of the dataset based on the relevance with business problem. 
+```{r include = FALSE}
+# after ensuring that I have removed all the columns I need to
+revenue <- airbnb3
+# Check for how many NAs in each column
+numMissingVal <- sapply(revenue,function(x) sum(is.na(x)))
+
+# remove some columns mannually 
+dropCol <-
+  c('square_feet','weekly_price','monthly_price','security_deposit','cleaning_fee','jurisdiction_names','review_scores_accuracy', 'review_scores_cleanliness',"review_scores_checkin",'review_scores_communication','reviews_per_month','cancellation_policy',            'calculated_host_listings_count','instant_bookable')  
+revenue <- revenue[, c(dropCol) := NULL]
+
+```
+
+Given six aspects for data quality check, several data cleaning approaches are taken for important columns.
+
+*	Zip code
+    * Replace 567 missing zip codes with newly generated zip codes using latitude and longitude to have a complete dataset.
+    * Unify zip codes to 5 digits to maintain consistency and conformity across the dataset.
+*	Number of bedrooms 
+    * Filter out the bedrooms that don’t equal to two to keep integrity for future merger with cost dataset, which only has cost for two-bedroom properties.
+* Price
+    * Remove dollar and comma sign and convert it to numeric format to maintain conformity.  
+    * Convert price for listings that have room type as “private room” by multiplying by two and get a new column “price_new”.
+    * For visualization, Cap for outliers that lie outside the 1.5 * *IQR* limits, replace those observations outside the lower limit with the value of 5th percentile and those that lie above the upper limit, with the value of 95th percentile.
+*	first review/last review 
+    * Convert to date format.
+    * Change the date to year , I found that the time these listings in all four boroughs started rental business is from 2001 to 2017. Most of them started during 2014 to 2016.
+    * There are more than 25% of missing values in this variable.
+    * Given these two observations, I used total number of reviews as a proxy for demand later.
+
+After data cleaning, the dataset has 149 unique zip codes. 
+
+## Zip Code
+- Replace Missing Values
+After replace the missing zip codes, check if there's missing value in the zip code column.
+```{r message = FALSE}
+############################################################################################# Zipcode
+# 206 unique zipcodes, 567 missing
+# replace missing with lat and long since there are no NA for lat and long
+# 1. select NA values 
+zipcode.na <- revenue[,c('id','zipcode','latitude','longitude')]
+zipcode.na <- zipcode.na[is.na(zipcode.na$zipcode), ]
+# 2. generate zip code based on lat and long 
+result <- do.call(rbind,
+                  lapply(1:nrow(zipcode.na),
+                         function(i)revgeocode(as.numeric(zipcode.na[i,4:3])))) # takes almost 5 mins to run
+# in case it cannot run, I also put the result in the folder
+# save(result, file="result.Rdata")
+# load("~(the working directory)/result.Rdata") #please run this line if the above code doesn't work properly.
+setDT(zipcode.na)
+zipcode.na[, result := result]
+zipcode.na$zipcode_new <- substr(str_extract(zipcode.na$result," [0-9]{5}, .+"),2,6)
+# check if there's still na
+zipcode.na[is.na(zipcode.na$zipcode_new),]
+# <NA> Grand Concourse/MC Clellan St, The Bronx, NY, USA -> 10452
+zipcode.na[is.na(zipcode.na$zipcode_new),]$zipcode_new <- '10452'
+# keep id and zipcode to merge with revenue table and replace the NAs
+zipcode.na <- zipcode.na[,-c(2:5)]
+revenue <- left_join(revenue, zipcode.na, by = "id")
+setDT(revenue)
+revenue[is.na(zipcode), zipcode := zipcode_new]
+revenue[, zipcode_new := NULL]
+# check if theres still NA in zip code 
+revenue[is.na(revenue$zipcode),]
+```
+There's no NA in the zip code column 
+
+- Unify Zip Code to 5 Digits 
+```{r message = FALSE}
+# Unify zip code to 5 digits
+# Valid Data Entries: A valid zipcode should have length = 5. Checking for number of zipcodes with valid length.
+# for length >5, keep the first 5
+# dfnew <- df[, zipcode:=as.character(zipcode)] # no use
+#df[ ,nchar(df$zipcode) > 5] <- substr(df[nchar(df$zipcode) > 5]$zipcode, 1, 5)
+revenue[nchar(revenue$zipcode) > 5, zipcode :=substr(revenue[nchar(revenue$zipcode) > 5]$zipcode, 1, 5)]
+# for <5, convert lat and long to zipcode
+# 1. select <5 values 
+zipcode5 <- revenue[,c('id','zipcode','latitude','longitude')]
+zipcode5 <- zipcode5[nchar(zipcode5$zipcode) < 5, ]
+# 2. generate zip code based on lat and long 
+result2 <- do.call(rbind,
+                  lapply(1:nrow(zipcode5),
+                         function(i)revgeocode(as.numeric(zipcode5[i,4:3])))) # takes about one minute to run
+setDT(zipcode5)
+zipcode5[, result := result2]
+zipcode5$zipcode_new <- substr(str_extract(zipcode5$result," [0-9]{5}, .+"),2,6)
+zipcode5 <- zipcode5[,-c(2:5)]
+revenue <- left_join(revenue, zipcode5, by = "id")
+setDT(revenue)
+revenue[nchar(revenue$zipcode) < 5, zipcode := zipcode_new]
+revenue[, zipcode_new := NULL]
+# check if the length all converts to 5 digits 
+revenue[nchar(revenue$zipcode) != 5,]
+```
+
+## Number of Rooms 
+Most of properties in the data is one bedroom home/apt or one bedroom private room. Based on the assumption give in the problme statement, I chose two bed room properties here. In the next step I converted the price by times 2. But we should keep in mind the fact that it includes some price for two bedrooms private room, which should be lower than that for entire home/apt. So I underestimated the price here.
+```{r}
+############################################################################################# Bedrooms 
+revenue %>% 
+  group_by(room_type,bedrooms) %>% 
+  summarise(no_properties = n())
+revenue1 <- revenue[bedrooms==2,]
+# 23896 obs 
+```
+
+## Price 
+
+```{r}
+############################################################################################# Price
+# remove the dollar and comma sign and change it into numeric for further calculation
+revenue1$price <- gsub('\\$', '', revenue1$price)
+revenue1$price_new <- as.numeric(gsub(",", "", revenue1$price))
+revenue1[room_type == 'Private room', price_new := price_new*2]
+############################################################################################# date format
+revenue1$last_scraped <- as.Date(revenue1$last_scraped,format = '%Y-%m-%d')
+revenue1$first_review <- as.Date(revenue1$first_review,format = '%Y-%m-%d')
+revenue1$last_review <- as.Date(revenue1$last_review,format = '%Y-%m-%d')
+```
+
+# Cost Data
+First subset the dataset by filtering the city name that is “New York”. There are 25 unique zip codes from four boroughs: Brooklyn, Manhattan, Queens, Staten Island in the subset dataset.
+* County name
+  + Convert it to borough names for further analysis
+* Quality check:
+  + There’re missing values from 1996-04 to 2007-05 for median price. 
+  + There’s no duplication in the cost dataset.
+  
+After data cleaning, there are 25 unique observations, each representing a zip code in the dataset. 
+
+```{r include = FALSE}
+# dimensions of zillow dataset
+dim(zillow)
+# There are 8946 rows and 262 columns in zillow data. 4684 unique cities
+summary(zillow)
+str(zillow)
+# Check for how many NAs in each column
+sapply(zillow,function(x) sum(is.na(x)))
+sapply(zillow, function(x) length(unique(x)))
+```
+## Zip Code
+```{r include = FALSE}
+############################################################################################# Zipcode
+#Function  to filter the data and select relevant columns
+zillow_subset <- function(dataset, cityname){
+  dataset <- filter(dataset, City == cityname)
+  dataset <- dataset[, c(2:262)]
+}
+cityname <- 'New York'
+zillow.ny <- zillow_subset(zillow, cityname)
+zillow.ny$RegionName <- as.character(zillow.ny$RegionName)
+zillow.ny[nchar(zillow.ny$RegionName)!=5,] #check if all zip code have 5 digits
+```
+Based on the assumption that all properties and all square feet within each locale can be assumed to be homogeneous, created the column of the boroughs each zip code belongs to. 
+```{r}
+# change the column 'CountyName' to 'neighbourhood_group_cleansed'
+colnames(zillow.ny)[5] <- 'borough'
+# convert the county name to borough name based on definition                
+zillow.ny$borough <-  ifelse(zillow.ny$borough %in% c('Queens','Bronx'), zillow.ny$borough, ifelse(zillow.ny$borough == 'Kings', 'Brooklyn', ifelse(zillow.ny$borough == 'New York', 'Manhattan','Staten Island')))
+```
+## Quality Check 
+```{r include = FALSE}
+# check for NAs in historical cost
+sapply(zillow.ny,function(x) sum(is.na(x)))
+# from 1996-04 to 2007-05 columns all contain missing values.
+# check for duplications
+zillow.ny[which(duplicated(zillow.ny)==TRUE),]
+# theres no duplications
+```
+## Historical Prices Change
+```{r}
+# for rShiny
+# keep price from 2007-2017
+df1 <- zillow.ny[,c(1,5,141:261)]
+# reshape wide format to long format
+price <- df1 %>%
+        gather('time', 'price',"2007-06":"2017-06")
+price$time2 <- gsub("[: -]", "" , price$time, perl=TRUE)
+# change format of time 
+price$time <- as.Date(paste(price$time,"-01",sep=""))
+# for rShiny app
+# write.csv(price,file = 'price.csv')
+```
+
+# Merge Two Datasets
+```{r}
+# use the central moving average to represent the cost
+zillow.ny1 <- zillow.ny[,c('RegionName','borough',
+                           '2017-02','2017-03','2017-04','2017-05','2017-06')] %>%
+  mutate(ma_5 = (`2017-02`+`2017-03`+`2017-04`+`2017-05`+`2017-06`)/5)
+# merge two datasets (inner join)
+alldt <- merge(revenue1, zillow.ny1, by.x = 'zipcode', by.y = 'RegionName')
+```
+
+```{r echo = FALSE}
+# subset revenue data that has corresponding cost data in zillow 
+revenue2 <- revenue1[zipcode %in% zillow.ny$RegionName, ]
+# it can be seen that some zip codes have properties that are not priced properly, which can not be used for the analysis
+# Capping For outliers that lie outside the 1.5**IQR* limits, I capped it by replacing those observations outside the lower limit with the value of 5th %ile and those that lie above the upper limit, with the value of 95th %ile. 
+# outliers detection
+capping_out <- function(x){
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+  caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+  H <- 1.5 * IQR(x, na.rm = T)
+  x[x < (qnt[1] - H)] <- caps[1]
+  x[x > (qnt[2] + H)] <- caps[2]
+  x
+}
+# revenue3 is the dataset with capping out new prices, which will be used for visualization later.
+revenue3 <- revenue2 %>%
+  group_by_at('zipcode') %>% 
+  mutate(new = capping_out(price_new)) %>%
+  ungroup()
+```
+After capping, the distribution seems still to be influenced by outliers.
+
+* Staten Island and Queens have lower price and narrower distribution and this is because of limited sample size.
+
+* Manhattan has a wider range of distribution of price. 
+
+# Quality Check for All Data
+-	Listings in AirBnb data whose last review date is before May 1st, 2015 (two years before now) and availability in 30, 60, 90 and 365 days are 0 are regarded as listings that don’t exist anymore or in other words, “fake listings”. 
+
+Remove "fake listings". there are 17 rows removed.
+```{r}
+fakelistings <- alldt[((alldt$last_review < as.Date('2015-05-01')) & 
+                        (alldt$availability_30 == 0) & 
+                        (alldt$availability_60 == 0) &
+                        (alldt$availability_90 == 0) &
+                        (alldt$availability_365 == 0)),]
+# remove the listings
+alldt <- alldt[((alldt$last_review >= as.Date('2015-05-01')) |
+                  is.na(alldt$last_review)|
+                        (alldt$availability_30 != 0) | 
+                        (alldt$availability_60 != 0) |
+                        (alldt$availability_90 != 0) |
+                        (alldt$availability_365 != 0)),]
+```
+
+# Metadata Created for Further Evaluation 
+## Cost 
+Given the observations above and the assumption I have for the time, I used centered moving average to represent the property price in April 2017 in order to reduce the noise and uncover patterns in the data. In particular, I calculated a 5-point moving average. The code can be found right before the merge code.
+$y_t = \frac{y_{t-2} + y_{t-1} + y_t + y_{t+1} + y_{t+2}}{5}$
+
+## Occupancy Rate
+Occupancy rate for a short-term vacation rental is the number of booked nights divided by the sum of the available nights and booked nights.
+
+* Availability is not representative, the time that the host updated the calender range from several days ago to several years ago. 
+* Review scores based on locations of property.
+* Use 0.75 as the occupancy rate for all the properties. Keep in mind that here the occupancy rate is over-estimated for certain properties that have lower demand. Same are Return on Investment and Cap Rate.
+
+```{r}
+# construct occupancy rate 
+alldt$or <- 0.75
+# get the year for first review
+alldt$year <- substr(alldt$first_review,1,4)
+```
+
+## Profitability Metrics
+Here I used the unit of time as one year. I calculated the annual revenue based on the occupancy rate and median price for each zip code.
+
+I chose three metrics to evaluate the profitability for each zip code as they focus on different aspects for investment: firstly, it’s Return on Investment (ROI), which measures the efficiency of the investment; second is Break-Even Period, which measures how long does it take to pay back the initial cost; third is total number of reviews, which measures the demand for the zip code. I included these three metrics as “there is no single metric that will give all the information you need to make the best choices possible about real estate investment.” In addition, since I assume the occupancy to be the same across zip codes, which is not realistic, it’s important to incorporate the metric that could reflect actual demand for each zip code in the analysis. 
+
+- ROI
+
+$ROI_i = \frac{Current Investment Value-Cost of Investment}{Cost of Investment} = \frac{Revenue_i+Appreciation Value_i-Purchase Price}{Cost of Investment}$
+
+in which $Revenue_i$ represents the total revenue generated until $year_i$, $Appreciaion value_i$ represents the total appreciation value of the property until $year_i$. For now, I only consider $Revenue_i$ given time limitation. I set $i$ as 1, 5, 10, 15, 20, 25, 30, 35, 40 respectively so that I could analyze the profitability for each zip code in different time frames. And I chose  and divided it by 40 to get the annuzlized ROI rate for convenience of comparison between different zip code.
+
+- Breakeven Period 
+measure how long does it take for the investment to pay back for each zip code.
+
+$Annual Net Operating Income (NOI) = 365 × Occupancy Rate × Daily Revenue$
+
+$Breakeven Period = \frac{Innital Cost}{Annual NOI}$
+
+* `rev_peryear`: Calculate revenue per year
+*	`beperiod`: Calculate break even period 
+```{r}
+# create median price for each zip code
+all_zp <- alldt %>%
+        group_by(zipcode) %>%
+        dplyr::summarize(neighbourhood = paste(unique(neighbourhood_group_cleansed)), 
+                         med_rev = median(price_new), 
+                         mean_rev = mean(price_new), cost = mean(ma_5), or = mean(or), 
+                         tot_review = sum(number_of_reviews), 
+                         ave_review = mean(number_of_reviews),n=n(),
+                         long = round(mean(longitude),5),lat=round(mean(latitude),5)
+                         )
+all_zp <- as.data.frame(all_zp)
+#all_zp <- merge(all_zp,df1[,-2],by.x='zipcode',by.y='RegionName')
+all_zp$rev_peryear <- 0
+all_zp$beperiod <- 0
+# revenue generated per year is time * occupancy rate * median price 
+all_zp$rev_peryear <- 365*all_zp$or*all_zp$med_rev
+# cap rate equals to annual noi / total cost
+all_zp$cr <- all_zp$rev_peryear/all_zp$cost*100
+# break-even period equals to 1/cap rate
+all_zp$beperiod <- all_zp$cost/all_zp$rev_peryear
+# profitability: ROI in year 1, year 5 to year 40 
+all_zp <- all_zp %>% mutate(year_01 = -(cost - rev_peryear)/cost,
+                            year_05 = -(cost - 5*rev_peryear)/cost,
+                            year_10 = -(cost - 10*rev_peryear)/cost,
+                            year_15 = -(cost - 15*rev_peryear)/cost,
+                            year_20 = -(cost - 20*rev_peryear)/cost,
+                            year_25 = -(cost - 25*rev_peryear)/cost,
+                            year_30 = -(cost - 30*rev_peryear)/cost,
+                            year_35 = -(cost - 35*rev_peryear)/cost,
+                            year_40 = -(cost - 40*rev_peryear)/cost,
+                            annual_roi = year_40/40)
+# for r shiny
+# write.csv(all_zp,file = 'all_zp.csv')                         
+```
+
+
+```{r echo = FALSE}
+# create the visual metrics to take all aspects into consideration 
+top10 <- data.frame(matrix(ncol = 0, nrow = 10))
+top10$return_on_investment <- all_zp[order(-all_zp$year_40),]$zipcode[1:10]
+top10$break_even_period <- all_zp[order(all_zp$beperiod),]$zipcode[1:10]
+top10$total_reviews <- all_zp[order(-all_zp$tot_review),]$zipcode[1:10]
+
+# find the zip codes that are in top 10 for all of the metrics 
+rec <- Reduce(intersect, top10)
+```
+
+```{r}
+# create data table for rShiny
+top_n <- data.frame(matrix(ncol = 0, nrow = nrow(all_zp)))
+top_n$return_on_investment <- all_zp[order(-all_zp$year_01),]$zipcode
+top_n$break_even_period <- all_zp[order(all_zp$beperiod),]$zipcode
+top_n$total_reviews <- all_zp[order(-all_zp$tot_review),]$zipcode
+```
+
+# Explotary Data Analysis
+## Revenue Analysis
+## Quantity Analysis
+```{r, echo = FALSE,fig.width=12}
+ggplot(data = revenue3,aes(x=zipcode,fill = neighbourhood_group_cleansed))+
+  geom_bar()+
+  ggtitle("Number of Properties by Zip Code")+
+  labs(x = "Zip Code", y = "Number of Properties")+
+  geom_text(stat='count', aes(label=..count..), vjust= -0.3)+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+## Renting Price Analysis
+```{r echo = FALSE,fig.width=12}
+# price distribution for each zipcode 
+g1 <- ggplot(data = revenue2,aes(x=zipcode,y=price_new,col = neighbourhood_group_cleansed))+
+  ggtitle("Revenue Distribution by Zip Code")+
+  labs(x = "Zip Code", y = "Revenue")+
+  geom_boxplot()+
+  theme(plot.title = element_text(hjust = 0.5))
+g1
+```
+
+
+```{r echo = FALSE, fig.width=12}
+ggplot(data = revenue3,aes(x=new,fill=neighbourhood_group_cleansed))+
+  geom_density(alpha=0.6)
+# price distribution for each zipcode after capping the outliers in price
+g2 <- ggplot(data = revenue3,aes(x=zipcode,y=new,col = neighbourhood_group_cleansed))+
+  labs(x = "Zip Code", y = "Revenue after Transformation of Outliers")+
+  geom_boxplot()
+grid.arrange(g1, g2, ncol = 1, nrow = 2)
+```
+
+```{r echo = FALSE,fig.width=12}
+# Download the base map
+# If it doesnt show, please run another time.
+ny_map <- get_map(location = "New York", zoom = 11)
+# Draw the heat map
+ggmap(ny_map, extent = "device") + geom_density2d(data = revenue1, aes(x = longitude, y = latitude), size = 0.3) +
+  ggtitle("Listings Offered by Airbnb at Borough Level")+
+  stat_density2d(data = revenue1, 
+                 aes(x = longitude, y = latitude, fill = ..level.., alpha = ..level..), size = 0.01, 
+                 bins = 16, geom = "polygon") + scale_fill_gradient(low = "green", high = "red") + 
+  scale_alpha(range = c(0, 0.5), guide = FALSE)+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+I didn't use availability to forcast occupancy rate because hosts updated their properties' availability different time.
+```{r, echo = FALSE,fig.width=12}
+ 
+g1 <- ggplot(data = revenue3,aes(x=zipcode,y=availability_365,col = neighbourhood_group_cleansed))+
+  ggtitle("Availability by Zip Codes")+
+  geom_boxplot()+
+  theme(plot.title = element_text(hjust = 0.5))
+g2 <- ggplot(data = revenue3,aes(x=zipcode,y=availability_30,col = neighbourhood_group_cleansed))+
+  geom_boxplot()
+# number of reviews
+g3 <- ggplot(data = revenue3,aes(x=zipcode,y=number_of_reviews,col = neighbourhood_group_cleansed))+
+  geom_boxplot()
+grid.arrange(g1, g2, g3, ncol = 1, nrow = 3)
+```
+
+## Visualization of Profitability Metrics
+Combine each metric together and plot them as below.
+```{r echo = FALSE,fig.width=12}
+
+g1 <- ggplot(data = all_zp, aes(x=reorder(zipcode,-annual_roi), y=annual_roi*100, fill = neighbourhood))+
+  ylim(0,18)+
+  ggtitle("Return on Investment% by Zip Code")+
+  labs(x = "Zip Code", y = "ROI%")+ 
+  geom_bar(stat = 'identity')+
+  geom_text(stat='identity', aes(label=round(annual_roi*100,1), vjust= -0.3))+
+  theme(plot.title = element_text(hjust = 0.5))
+
+g2 <- ggplot(data = all_zp, aes(x=reorder(zipcode,beperiod), y=beperiod, fill = neighbourhood))+
+  ylim(0,80)+
+  ggtitle("Break Even Periods by Zip Code")+
+  labs(x = "Zip Code", y = "Break Even Period")+ 
+  geom_bar(stat = 'identity')+
+  geom_text(stat='identity', aes(label=round(beperiod,0), vjust= -0.3))+
+  theme(plot.title = element_text(hjust = 0.5))
+
+g3 <- ggplot(data = all_zp, aes(x=reorder(zipcode,-tot_review), y=tot_review, fill = neighbourhood))+
+  ylim(0,4000)+
+  ggtitle("Total Reviews by Zip Code")+
+  labs(x = "Zip Code", y = "Total Reviews")+ 
+  geom_bar(stat = 'identity')+
+  geom_text(stat='identity', aes(label=round(tot_review,0), vjust= -0.3))+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+
+grid.arrange(g1, g2, g3, ncol = 1, nrow = 3)
+
+```
+
+I listed the top 10 zip codes for each metrics, and the zip codes that are listed in each metrics will be recommended.  
+By viewing the aggregated table, I find that 10036, 10025, 11231 meet the requirments: a relatively high annual ROI, a relatively short break-even period. 
+```{r echo = FALSE,fig.width=12}
+top10 %>%
+  mutate(
+    return_on_investment = cell_spec(return_on_investment, "html", color = ifelse(return_on_investment == rec[1],"red",ifelse(return_on_investment == rec[2],"blue", ifelse(return_on_investment == rec[3],"green", top10)))),            
+    break_even_period = cell_spec(break_even_period, "html", color = ifelse(break_even_period == rec[1],"red",ifelse(break_even_period == rec[2],"blue", ifelse(break_even_period == rec[3],"green", top10)))),
+    total_reviews = cell_spec(total_reviews, "html", color = ifelse(total_reviews == rec[1],"red", ifelse(total_reviews == rec[2],"blue",ifelse(total_reviews == rec[3],"green",ifelse(total_reviews == rec[3],"green", top10))))) )%>%
+  kable(format = "html", escape = F) %>%
+  add_header_above(c("Top 10 Zip Codes for Individual Metric" = 3)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),fixed_thead = T) 
+  
+```
+
+Tidying up profit summary data for visulization.
+Using the plot below we can see how ROI changes over time for each zip code.
+By year 40, ROIs for all the zip codes are above zero and 10312 has the highest ROI, which aligns with the figure above. 
+```{r echo = FALSE,fig.width=9}
+data.summary.profit <- gather(all_zp[, c(1,2,15:23)], key = "year", value = "roi", 
+                             year_01, year_05, year_10, year_15, year_20, year_25, year_30, year_35, year_40) 
+#plotting profit over the years for zipcodes
+profitability.plot <-  ggplot(data.summary.profit, aes(x = zipcode, y = roi, frame = year)) +  
+                geom_point(aes(color = data.summary.profit$neighbourhood)) + 
+                geom_hline(aes(yintercept = 0), linetype = "dashed", color = "red") +
+                scale_y_continuous(labels = seq(-1,6,0.5), breaks = seq(-1,6,0.5)) +
+                labs(title = "Return on Investment Over Time",
+                       x = "Zipcode", y =  "Return on Investment") +
+                theme_classic() + 
+                coord_flip()
+
+ggplotly(profitability.plot)
+```
+
+# Next Steps 
+
+* Data
+    * Collect more up to date and more balanced data.
+    * Include the time series for revenue data so that revenue can also be predicted.  
+    * Collect data from other creditable sources, such as HomeAway, Redfine, which are competitors for AirBnb and Zillow respectively.
+    * Collect historical availability and get prediction of occupancy rate. 
+*	Metrics 
+    * Incorporate seasonality analysis in revenue data if time series data is given. Then revenue per year is calculated based on different prices for workdays and vocations and also conditional occupancy rate. 
+    * Perform time series modeling (ARIMA) to predict future property cost and add this part to construct return on investment.
+    * Consider fixed cost such as property management, maintenance, taxes in return calculation.  
+    * Get the annualized total number of reviews as the evaluation metric by calculating the duration for each listing using the time difference between today and the date for first review.  
+
+
