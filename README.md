@@ -4,7 +4,7 @@
 ## Table of Contents
 - [Lea Zhang - My Road To Data Science](#lea-zhang---my-road-to-data-science)
 - [About](#about)
-- [R Project](#R Project) 
+- [R Project]
   - [IBM HR Analytics](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/tree/master/R%20Project/IBM%20Attrition%20Analysis) 
   - [2008 Democratic Primaries - Clinton vs. Obama](https://github.com/lea1206zhang/Lea-Zhang_MyRoadToDataScience/tree/master/R%20Project/2008%20Democratic%20Primaries%20-%20Clinton%20vs.%20Obama)
 - [Tableau](https://public.tableau.com/profile/lea.zhang#!/)
